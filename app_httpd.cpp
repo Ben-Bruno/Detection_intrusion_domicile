@@ -1,3 +1,4 @@
+//app_httpd.cpp
 // Copyright 2015-2016 Espressif Systems (Shanghai) PTE LTD
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,6 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "globals.h"
 #include "esp_http_server.h"
 #include "esp_timer.h"
 #include "esp_camera.h"
@@ -30,7 +32,7 @@
 // Face Recognition takes upward from 15 seconds per frame on chips other than ESP32S3
 // Makes no sense to have it enabled for them
 #if CONFIG_IDF_TARGET_ESP32S3
-#define CONFIG_ESP_FACE_RECOGNITION_ENABLED 1
+#define CONFIG_ESP_FACE_RECOGNITION_ENABLED 0
 #else
 #define CONFIG_ESP_FACE_RECOGNITION_ENABLED 0
 #endif
@@ -52,7 +54,7 @@
 #include "face_recognition_tool.hpp"
 #include "face_recognition_112_v1_s16.hpp"
 #include "face_recognition_112_v1_s8.hpp"
-
+extern volatile bool intrusion_detectee;
 #define QUANT_TYPE 0 //if set to 1 => very large firmware, very slow, reboots when streaming...
 
 #define FACE_ID_SAVE_NUMBER 7
@@ -249,30 +251,47 @@ static void draw_face_boxes(fb_data_t *fb, std::list<dl::detect::result_t> *resu
 #endif
     }
 }
-
 #if CONFIG_ESP_FACE_RECOGNITION_ENABLED
-static int run_face_recognition(fb_data_t *fb, std::list<dl::detect::result_t> *results)
+static int run_face_recognition(fb_data_t *fb,
+                                std::list<dl::detect::result_t> *results)
 {
     std::vector<int> landmarks = results->front().keypoint;
     int id = -1;
 
     Tensor<uint8_t> tensor;
-    tensor.set_element((uint8_t *)fb->data).set_shape({fb->height, fb->width, 3}).set_auto_free(false);
+    tensor.set_element((uint8_t *)fb->data)
+          .set_shape({fb->height, fb->width, 3})
+          .set_auto_free(false);
 
     int enrolled_count = recognizer.get_enrolled_id_num();
 
-    if (enrolled_count < FACE_ID_SAVE_NUMBER && is_enrolling){
+    if (enrolled_count < FACE_ID_SAVE_NUMBER && is_enrolling) {
         id = recognizer.enroll_id(tensor, landmarks, "", true);
         log_i("Enrolled ID: %d", id);
         rgb_printf(fb, FACE_COLOR_CYAN, "ID[%u]", id);
     }
 
     face_info_t recognize = recognizer.recognize(tensor, landmarks);
-    if(recognize.id >= 0){
-        rgb_printf(fb, FACE_COLOR_GREEN, "ID[%u]: %.2f", recognize.id, recognize.similarity);
+
+    if (recognize.id >= 0) {
+        // ── Visage RECONNU ─────────────────────────────────────
+        rgb_printf(fb, FACE_COLOR_GREEN,
+                   "Autorise ID[%u] %.2f", recognize.id, recognize.similarity);
+        log_i("Visage autorise ID %d (similarite %.2f)",
+              recognize.id, recognize.similarity);
+
+        // Signal sonore via broche buzzer (PWM direct, non bloquant)
+        // La mélodie complète est jouée dans le .ino via intrusion_detectee=false
+        // On positionne juste un flag "authorized" si nécessaire.
+        // Ici on ne fait RIEN → pas d'alerte, flux continue.
+
     } else {
-        rgb_print(fb, FACE_COLOR_RED, "Intruder Alert!");
+        // ── Visage INCONNU ─────────────────────────────────────
+        rgb_print(fb, FACE_COLOR_RED, "INTRUS !");
+        log_i("Visage non reconnu → intrusion signalée");
+        intrusion_detectee = true;   // lu dans loop() du .ino
     }
+
     return recognize.id;
 }
 #endif
@@ -1353,7 +1372,7 @@ void startCameraServer()
     ra_filter_init(&ra_filter, 20);
 
 #if CONFIG_ESP_FACE_RECOGNITION_ENABLED
-    recognizer.set_partition(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "fr");
+    recognizer.set_partition(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "spiffs");
 
     // load ids from flash partition
     recognizer.set_ids_from_flash();
