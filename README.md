@@ -1,23 +1,23 @@
-# 🛡️ Sentinel-S3 : Smart Edge Security System
+# Sentinel-S3 : Smart Edge Security System
 
 **Sentinel-S3** est un système de vidéosurveillance IoT autonome basé sur un **ESP32-S3**, conçu pour fonctionner en **Edge Computing** avec traitement local, détection d’intrusion et alertes sécurisées en temps réel.
 
 ---
 
-## ✨ Fonctionnalités
+## Fonctionnalités
 
-* 👁️ Capture d’images (UXGA) + traitement local (Edge AI prêt pour reconnaissance faciale avec PSRAM OPI)
-* 📱 Alertes Telegram en temps réel avec image (TLS/SSL via WiFiClientSecure)
-* 🌐 Double serveur :
+* Capture d’images (UXGA) + traitement local (Edge AI prêt pour reconnaissance faciale avec PSRAM OPI)
+*  Alertes Telegram en temps réel avec image (TLS/SSL via WiFiClientSecure)
+*  Double serveur :
 
   * Port 80 → streaming vidéo (MJPEG)
   * Port 81 → dashboard web de contrôle
-* 💾 Stockage SD avec horodatage (NTP)
-* 🏃 Détection hybride PIR + logiciel (anti faux positifs)
+*  Stockage SD avec horodatage (NTP)
+*  Détection hybride PIR + logiciel (anti faux positifs)
 
 ---
 
-## 🧠 Défis Techniques
+##  Défis Techniques
 
 * Optimisation mémoire (partition Huge APP 3MB)
 * Gestion conflits matériels (PSRAM OPI vs SD en mode 1-bit)
@@ -25,7 +25,7 @@
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 [ PIR ] → [ ESP32-S3 ] ← [ Caméra ]
                   ↑
@@ -36,7 +36,7 @@
 
 ---
 
-## 🛠️ Matériel
+##  Matériel
 
 * ESP32-S3 (Freenove recommandé, avec PSRAM)
 * Caméra OV2640 / OV3660
@@ -45,7 +45,7 @@
 
 ---
 
-## 🚀 Installation
+##  Installation
 
 1. Cloner :
 
@@ -66,7 +66,7 @@
 
 ---
 
-## ⚠️ Notes Importantes
+##  Notes Importantes
 
 * Carte SD requise si stockage activé
 * PSRAM obligatoire pour stabilité (sinon crash possible)
@@ -75,7 +75,7 @@
 
 ---
 
-## 🔮 Roadmap
+##  Roadmap
 
 * Reconnaissance faciale complète
 * Batterie LiPo (autonomie)
@@ -83,6 +83,6 @@
 
 ---
 
-## 📄 Licence
+## Licence
 
 Usage libre pour projets éducatifs et personnels.
